@@ -1,0 +1,101 @@
+{
+	"info": {
+		"_postman_id": "fd893db9-0791-405e-b7a3-5adf485342d0",
+		"name": "GarmentSKU_Label_studio",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29644078",
+		"_collection_link": "https://digital-signage-8170.postman.co/workspace/digital-Signage-Workspace~6cfede2c-fb24-43d0-a917-1fd68b2939ca/collection/29644078-fd893db9-0791-405e-b7a3-5adf485342d0?action=share&source=collection_link&creator=29644078"
+	},
+	"item": [
+		{
+			"name": "Get Projects",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/projects",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"projects"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Project",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"Postman Project\",\r\n    \"description\": \"blash blash\",\r\n    \"label_config\": \"<View>\\n  <Image name=\\\"image\\\" value=\\\"$image\\\"/>\\n  <RectangleLabels name=\\\"label\\\" toName=\\\"image\\\">\\n    <Label value=\\\"postmanlabel1\\\" background=\\\"green\\\"/>\\n    <Label value=\\\"postmanlabel2\\\" background=\\\"blue\\\"/>\\n  </RectangleLabels>\\n</View>\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/projects",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"projects"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "token",
+			"value": "Token f36361249e449960f22a082ba043a363d094b60c",
+			"type": "string"
+		}
+	]
+}
