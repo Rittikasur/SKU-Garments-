@@ -10,36 +10,35 @@ import os
 import base64
 import requests
 from pdf2image import convert_from_path
+import logging
+logging.basicConfig(filename="upload-log.log", level=logging.DEBUG, 
+                    filemode="w+",format="%(name)s → %(levelname)s: %(message)s",
+                    datefmt="%Y-%m-%d %H:%M")
 
 
-def project_creation(api_key,project_title,label_studio_url):
+
+def project_creation(api_key,project_title,label_studio_url,project_description,label_config):
     headers = {
     "Authorization": api_key,
     "Content-Type": "application/json"
     }
     payload = {
         "title": project_title,
-        "description": "project creation",
-        "label_config": """
-        <View>
-            <Image name="image" value="$image"/>
-            <RectangleLabels name="label" toName="image">
-                <Label value="postmanlabel1" background="green"/>
-                <Label value="postmanlabel2" background="blue"/>
-            </RectangleLabels>
-        </View>
-        """
+        "description": project_description,
+        "label_config": label_config
     }
     response = requests.post(label_studio_url, headers=headers, json=payload)
-    print(response.status_code)
+    logging.info(f"Project status code: {response.status_code}")
 
     if response.status_code == 201:
-        print("Project created succesfully")
+        print("Creating Project")
+        logging.info(f"Project:{project_title} created succesfully")
     else:
-        print("Error in project creation")
+        logging.error("Error in project creation")
     res = response.json()
     #print(details)
     id = res['id']
+    logging.info(f"Project ID:{id} created succesfully")
     # print(id)
     return(id)
 
@@ -56,6 +55,7 @@ def convert_pdf_to_jpg(input_dir, output_dir):
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)  # Create the output directory if it doesn't exist
+    print("Converting Images")
 
     for filename in os.listdir(input_dir):
         if filename.endswith('.pdf'):
@@ -69,10 +69,10 @@ def convert_pdf_to_jpg(input_dir, output_dir):
                     img.save(img_path, 'JPEG')
 
             except Exception as e:
-                print(f'Error converting {pdf_path}: {e}')
+                logging.error(f'Error converting {pdf_path}: {e}')
 
             else:
-                print(f'Successfully converted {pdf_path} to {output_path}')
+                logging.info(f'Successfully converted {pdf_path} to {output_path}')
 
 
 
@@ -100,22 +100,54 @@ def upload_image_to_label_studio(image_path, project_id, api_key, label_studio_u
 
     # Check if the request was successful
     if response.status_code == 201:
-        print(f"Successfully uploaded {os.path.basename(image_path)}")
+        logging.info(f"Successfully uploaded {os.path.basename(image_path)}")
     else:
-        print(f"Failed to upload {os.path.basename(image_path)}. Status code: {response.status_code}")
-        print(f"Response: {response.text}")
+        logging.error(f"Failed to upload {os.path.basename(image_path)}. Status code: {response.status_code}")
+        logging.error(f"Response: {response.text}")
 
 
 
 # Function to iterate through the output directory to upload each individual image
 def upload_images_from_folder(folder_path, project_id, api_key, label_studio_url):
+    print("Uploading Images")
     for filename in os.listdir(folder_path):
         if filename.lower().endswith(('.jpg', '.jpeg')):
             image_path = os.path.join(folder_path, filename)
             upload_image_to_label_studio(image_path, project_id, api_key, label_studio_url)
 
 
+
+def user_input():
+    project_title = input("Enter project title")
+    project_description = input("Enter project description")
+    
+    #getting label details from the user
+
+    dlabstr = """"""
+    dlabel = []
+    count = int(input("Enter the number of labels"))
+    for i in range(count):
+        label,color = input("Enter the label and color").split(",")
+        dlabel.append((label,color))
+
+    view_open = """ <View>
+        <Image name="image" value="$image"/>
+        <RectangleLabels name="label" toName="image">"""
+
+    view_close = """ </RectangleLabels>
+        </View>"""
+
+    for label,color in dlabel:
+        dlabstr = dlabstr + f"""<Label value="{label}" background="{color}"/>""" + "\n"
+
+    label_config = view_open + dlabstr + view_close
+
+    return project_title, project_description, label_config
+
+
+
 if __name__ == "__main__":
+
     
     folder_path = r'Purchase_Orders_JPG' # Set accordingly
     api_key = 'Token 107ed1f5cc82a5837866eab5b6f998999f5626ef' # Set accordingly
@@ -124,9 +156,8 @@ if __name__ == "__main__":
     input_dir = r"Purchase_Orders_PDF"
     output_dir = r"Purchase_Orders_JPG"
 
-    project_title = "SKU Project"
+    project_title,project_description,label_config = user_input()
 
-
-    project_id = project_creation(api_key, project_title,label_studio_url) #derived from project creation function
+    project_id = project_creation(api_key, project_title,label_studio_url,project_description,label_config) #derived from project creation function
     convert_pdf_to_jpg(input_dir, output_dir)
     upload_images_from_folder(folder_path, project_id, api_key, label_studio_url)
