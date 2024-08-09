@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.15.1
+    container_name: mlflow
+    ports:
+      - "5000:5000"  # Map MLflow's port 5000 to your local machine's port 5000
+    volumes:
+      - ./mlruns:/home/mlflow/mlruns  # Mount a local directory for MLflow runs
+      - ./mlflow_artifacts:/home/mlflow/artifacts  # Mount a local directory for MLflow artifacts
+    environment:
+      MLFLOW_TRACKING_URI: "http://0.0.0.0:5000"  # Set MLflow Tracking URI
+      ARTIFACT_ROOT: "/home/mlflow/artifacts"  # Set artifact storage location
+    command: "mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /home/mlflow/artifacts --host 0.0.0.0"
+
+  label-studio:
+    image: heartexlabs/label-studio:latest
+    container_name: label-studio
+    ports:
+      - "8080:8080"  # Map Label Studio's port 8080 to your local machine's port 8080
+    volumes:
+      - ./annotation:/label-studio/data  # Mount a local directory for Label Studio data
+    environment:
+      LABEL_STUDIO_PORT: "8080"  # Optional: Set Label Studio's port via environment variable
+
+volumes:
+  mlruns: {}
+  mlflow_artifacts: {}
+  annotation: {}
