@@ -58,6 +58,7 @@ def convert_pdf_to_jpg(input_dir, output_dir):
     print("Converting Images")
 
     for filename in os.listdir(input_dir):
+        filename = filename.lower()
         if filename.endswith('.pdf'):
             pdf_path = os.path.join(input_dir, filename)  # Get the full path of the PDF file
             output_path = os.path.join(output_dir, f'{os.path.splitext(filename)[0]}.jpg')  # Construct the output image path
