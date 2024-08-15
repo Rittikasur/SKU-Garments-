@@ -11,8 +11,15 @@ from pycocotools.coco import COCO
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultTrainer
 import mlflow
+
+
 path = os.environ['PATH']
 os.environ["PATH"] = "D:/Rohit/GarmentsSKU/SKU-Garments-/Release-24.07.0-0/poppler-24.07.0/Library/bin" + ';' + path
+
+mlflow.set_tracking_uri("http://127.0.0.1:5001")
+mlflowclient = mlflow.MlflowClient()
+folder_path = 'exported_data'
+latest_model_path = 'latest_models'
 class LayoutModelWrapper(mlflow.pyfunc.PythonModel):
     def __init__(self, model):
         self.model = model
@@ -107,34 +114,49 @@ def load_trained_model(client_name):
     return wrapped_model
 
 
-def main():
-    mlflow.set_tracking_uri("http://127.0.0.1:5001")
-    mlflowclient = mlflow.MlflowClient()
-
-    COCO_ANNO_PATH = './data/result.json'
-    COCO_IMG_PATH = './data/images/'
+def train_and_store_model(clientName):
+    COCO_ANNO_PATH = os.path.join(".",folder_path,clientName,"result.json")
+    COCO_IMG_PATH = os.path.join(".",folder_path,clientName,"images")
     coco = COCO(COCO_ANNO_PATH)
-    client_name = "Client1"
-    # setup_paths_and_split(COCO_ANNO_PATH, COCO_IMG_PATH, client_name)
-    # train_model(client_name)
+    setup_paths_and_split(COCO_ANNO_PATH, COCO_IMG_PATH, clientName)
+    train_model(clientName)
 
     # # Store Model in Model Registry
-    model = load_trained_model(client_name)
-    model_path= f"./layout-model-training/outputs/{client_name}/model_final.pth"
-    config_path= f"./layout-model-training/outputs/{client_name}/config.yaml"
+    model = load_trained_model(clientName)
+    model_path= f"./layout-model-training/outputs/{clientName}/model_final.pth"
+    config_path= f"./layout-model-training/outputs/{clientName}/config.yaml"
     with mlflow.start_run() as run:
-        mlflow.pyfunc.log_model(artifact_path=client_name,python_model=model,
+        mlflow.pyfunc.log_model(artifact_path=clientName,python_model=model,
                                 artifacts={"model_path": model_path,"config_path":config_path},
-                                registered_model_name=client_name)
+                                registered_model_name=clientName)
+    return
 
+
+def load_and_infer(client_name,filepath,TYPE):
     # Load Model from Model Registry
+    loadedmodel = None
     vlatest_version = mlflowclient.get_latest_versions(client_name)[0].version
-    loadedmodel = mlflow.pyfunc.load_model(model_uri=f"models:/{client_name}/{vlatest_version}")
-
-    # pdf_token, pdf_image = lp.load_pdf("D:\Rohit\GarmentsSKU\SKU-Garments-\esprit_test.pdf",load_images=True)
-    pdfimage = cv2.imread("D:/Rohit/GarmentsSKU/SKU-Garments-/testimg.jpg")
+    dst_path = os.path.join(".",latest_model_path,client_name+"_"+vlatest_version)
+    if not os.path.exists(dst_path):
+        os.makedirs(dst_path)
+        loadedmodel = mlflow.pyfunc.load_model(model_uri=f"models:/{client_name}/{vlatest_version}",dst_path=dst_path)
+    else:
+        loadedmodel = mlflow.pyfunc.load_model(model_uri=dst_path)
+    if(TYPE == "PDF"):
+        pdf_token, pdf_image = lp.load_pdf(filepath,load_images=True)
+    elif(TYPE == "IMG"):
+        pdfimage = cv2.imread(filepath)
+    else:
+        print("Wrong file type")
+        return
     layout = loadedmodel.predict(pdfimage)
     print(layout)
+    return
+
+def main():
+    client_name = "Client1"
+    train_and_store_model(client_name)
+    # load_and_infer(client_name,"D:/Rohit/GarmentsSKU/SKU-Garments-/testimg.jpg","IMG")
 
 if __name__ == "__main__":
     main()

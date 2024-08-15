@@ -11,13 +11,17 @@ import base64
 import requests
 from pdf2image import convert_from_path
 import logging
+from utils import get_random_color
 logging.basicConfig(filename="upload-log.log", level=logging.DEBUG, 
                     filemode="w+",format="%(name)s → %(levelname)s: %(message)s",
                     datefmt="%Y-%m-%d %H:%M")
 
+api_key = 'Token 22317497992f4a627994bf8c42c08014121256a0' # Set accordingly
+label_studio_url = 'http://localhost:8080/api/projects' # Set accordingly | can be found in the url bar of the browser
 
 
-def project_creation(api_key,project_title,label_studio_url,project_description,label_config):
+def project_creation(project_title,project_description,label_config):
+    global api_key,label_studio_url
     headers = {
     "Authorization": api_key,
     "Content-Type": "application/json"
@@ -64,7 +68,7 @@ def convert_pdf_to_jpg(input_dir, output_dir):
             output_path = os.path.join(output_dir, f'{os.path.splitext(filename)[0]}.jpg')  # Construct the output image path
 
             try:
-                images = convert_from_path(pdf_path, poppler_path=r"C:/Users/datacore/Desktop/AILABS/Projects/Clients/SKU/production/Release-24.07.0-0/poppler-24.07.0/Library/bin")
+                images = convert_from_path(pdf_path)
                 for i, img in enumerate(images):
                     img_path = f'{output_path[:-4]}_{i}.jpg' if i > 0 else output_path  # Add index to output image path if multiple pages
                     img.save(img_path, 'JPEG')
@@ -77,27 +81,19 @@ def convert_pdf_to_jpg(input_dir, output_dir):
 
 
 
-def upload_image_to_label_studio(image_path, project_id, api_key, label_studio_url):
-    # Read the image file
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-
-    # Prepare the data for the API request
-    data = {
-        "data": {
-            "image": f"data:image/jpeg;base64,{encoded_string}"
-        }
-    }
-
+def upload_image_to_label_studio(image_path, filename, project_id, api_key, label_studio_url):
+    print(image_path)
+    files=[('filename',(filename,open(image_path,'rb'),'image/jpeg'))]
+    payload = {}
+    
     # Set up the headers
     headers = {
-        "Authorization": api_key,
-        "Content-Type": "application/json"
+        "Authorization": api_key
     }
 
     # Make the API request
-    url = f"{label_studio_url}/{project_id}/import"
-    response = requests.post(url, json=data, headers=headers)
+    url = f"{label_studio_url}/{project_id}/import?commit_to_project=true" #7/import?commit_to_project=true
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
 
     # Check if the request was successful
     if response.status_code == 201:
@@ -109,14 +105,32 @@ def upload_image_to_label_studio(image_path, project_id, api_key, label_studio_u
 
 
 # Function to iterate through the output directory to upload each individual image
-def upload_images_from_folder(folder_path, project_id, api_key, label_studio_url):
+def upload_images_from_folder(folder_path, project_id):
+    global api_key,label_studio_url
     print("Uploading Images")
     for filename in os.listdir(folder_path):
         if filename.lower().endswith(('.jpg', '.jpeg')):
             image_path = os.path.join(folder_path, filename)
-            upload_image_to_label_studio(image_path, project_id, api_key, label_studio_url)
+            upload_image_to_label_studio(image_path,filename, project_id, api_key, label_studio_url)
 
 
+def preprocess_inputs(project_title,project_description,dlabel):
+    dlabstr = """"""
+
+    view_open = """ <View>
+        <Image name="image" value="$image"/>
+        <RectangleLabels name="label" toName="image">"""
+
+    view_close = """ </RectangleLabels>
+        </View>"""
+
+    for label in dlabel:
+        color = get_random_color()
+        dlabstr = dlabstr + f"""<Label value="{label}" background="{color}"/>""" + "\n"
+
+    label_config = view_open + dlabstr + view_close
+
+    return project_title, project_description, label_config
 
 def user_input():
     project_title = input("Enter project title")
@@ -151,14 +165,12 @@ if __name__ == "__main__":
 
     
     folder_path = r'Purchase_Orders_JPG' # Set accordingly
-    api_key = 'Token 107ed1f5cc82a5837866eab5b6f998999f5626ef' # Set accordingly
-    label_studio_url = 'http://localhost:8080/api/projects' # Set accordingly | can be found in the url bar of the browser
 
     input_dir = r"Purchase_Orders_PDF"
     output_dir = r"Purchase_Orders_JPG"
 
     project_title,project_description,label_config = user_input()
 
-    project_id = project_creation(api_key, project_title,label_studio_url,project_description,label_config) #derived from project creation function
+    project_id = project_creation( project_title,project_description,label_config) #derived from project creation function
     convert_pdf_to_jpg(input_dir, output_dir)
-    upload_images_from_folder(folder_path, project_id, api_key, label_studio_url)
+    upload_images_from_folder(folder_path, project_id)
