@@ -12,7 +12,7 @@ import shutil
 path = os.environ['PATH']
 os.environ["PATH"] = "D:/Rohit/GarmentsSKU/SKU-Garments-/Release-24.07.0-0/poppler-24.07.0/Library/bin" + ';' + path
 DATABASE = 'application.db'
-
+PROJECT_PATH = "D:/Rohit/GarmentsSKU/SKU-Garments-"
 app = Flask(__name__)
 CORS(app)
 
@@ -51,9 +51,9 @@ def createProject():
 def uploadData():
     project_name = request.form.get("project_name")
     project_id = request.form.get("project_id")
-    output_dir = os.path.join(".","raw_data",project_name)
+    output_dir = os.path.join(PROJECT_PATH,"raw_data",project_name)
     print(output_dir,project_id)
-
+    print(request.files)
     if 'files' not in request.files or project_id is None or output_dir is None :
         return 'No file part or project ID or Output Directory'
     

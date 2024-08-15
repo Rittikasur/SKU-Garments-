@@ -29,7 +29,7 @@ def export_annotation(client_name,client_id):
                 with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
                     zip_ref.extractall(extract_to)
                     print("Successfully Extracted the .zip file")
-                # os.remove(zip_file_path)
+                os.remove(zip_file_path)
                 print("Deleted the zip File")
             except Exception as e:
                 print("Error in zip file extraction"+ e)

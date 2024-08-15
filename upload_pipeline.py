@@ -81,27 +81,19 @@ def convert_pdf_to_jpg(input_dir, output_dir):
 
 
 
-def upload_image_to_label_studio(image_path, project_id, api_key, label_studio_url):
-    # Read the image file
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-
-    # Prepare the data for the API request
-    data = {
-        "data": {
-            "image": f"data:image/jpeg;base64,{encoded_string}"
-        }
-    }
-
+def upload_image_to_label_studio(image_path, filename, project_id, api_key, label_studio_url):
+    print(image_path)
+    files=[('filename',(filename,open(image_path,'rb'),'image/jpeg'))]
+    payload = {}
+    
     # Set up the headers
     headers = {
-        "Authorization": api_key,
-        "Content-Type": "application/json"
+        "Authorization": api_key
     }
 
     # Make the API request
-    url = f"{label_studio_url}/{project_id}/import"
-    response = requests.post(url, json=data, headers=headers)
+    url = f"{label_studio_url}/{project_id}/import?commit_to_project=true" #7/import?commit_to_project=true
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
 
     # Check if the request was successful
     if response.status_code == 201:
@@ -119,7 +111,7 @@ def upload_images_from_folder(folder_path, project_id):
     for filename in os.listdir(folder_path):
         if filename.lower().endswith(('.jpg', '.jpeg')):
             image_path = os.path.join(folder_path, filename)
-            upload_image_to_label_studio(image_path, project_id, api_key, label_studio_url)
+            upload_image_to_label_studio(image_path,filename, project_id, api_key, label_studio_url)
 
 
 def preprocess_inputs(project_title,project_description,dlabel):
