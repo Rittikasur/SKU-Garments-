@@ -13,6 +13,7 @@ from detectron2.engine import DefaultTrainer
 import mlflow
 path = os.environ['PATH']
 os.environ["PATH"] = "D:/Rohit/GarmentsSKU/SKU-Garments-/Release-24.07.0-0/poppler-24.07.0/Library/bin" + ';' + path
+
 class LayoutModelWrapper(mlflow.pyfunc.PythonModel):
     def __init__(self, model):
         self.model = model
@@ -115,6 +116,7 @@ def main():
     COCO_IMG_PATH = './data/images/'
     coco = COCO(COCO_ANNO_PATH)
     client_name = "Client1"
+    
     # setup_paths_and_split(COCO_ANNO_PATH, COCO_IMG_PATH, client_name)
     # train_model(client_name)
 
