@@ -1,2 +1,5 @@
 werkzeug \u2192 WARNING:  * Debugger is active!
 werkzeug \u2192 INFO:  * Debugger PIN: 296-840-699
+urllib3.connectionpool \u2192 DEBUG: Starting new HTTP connection (1): localhost:8080
+urllib3.connectionpool \u2192 DEBUG: http://localhost:8080 "GET /api/projects/8/export?exportType=COCO HTTP/11" 200 108241
+werkzeug \u2192 INFO: 127.0.0.1 - - [16/Aug/2024 00:07:32] "POST /export_data HTTP/1.1" 200 -
