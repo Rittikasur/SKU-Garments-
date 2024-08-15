@@ -7,3 +7,7 @@ layout-model-training/data/
 mlartifacts/
 mlruns/
 annotation/
+exported_data/
+latest_models/
+raw_data/
+__pycache__/
